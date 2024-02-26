@@ -1,0 +1,32 @@
+﻿<Window x:Class="Justice.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Justice"
+        mc:Ignorable="d"
+        Title="Justice" SizeToContent="Height" Width="640">
+    <StackPanel>
+        <DockPanel >
+            <StackPanel>
+                <Label Content="InstanceName" />
+                <TextBox x:Name="ServerNameTextBox" Text="localhost\instance1"></TextBox>
+            </StackPanel>
+            <StackPanel>
+                <Label Content="DatabaseName" />
+                <TextBox x:Name="DatabaseNameTextBox" Text="PlayerTracking"></TextBox>
+            </StackPanel>
+            <DockPanel>
+                <Button VerticalContentAlignment="Center" x:Name="ConnectButton"  Click="ConnectButton_Click">Connect</Button>
+            </DockPanel>
+        </DockPanel>
+        <TextBlock x:Name="ConnectedStatusTextBlock" Background="Red" HorizontalAlignment="Stretch" TextWrapping="Wrap" >Not Connected</TextBlock>
+        <Label Content="Stored Procedure Name" ></Label>
+        <TextBox x:Name="StoredProcNameTextBox">dbo.Proc_Version</TextBox>
+        <Label Content="Test Query to Generate Output POCO"/>
+        <RichTextBox x:Name="QueryRichTextBox" HorizontalAlignment="Stretch" MaxHeight="260" VerticalScrollBarVisibility="Auto"></RichTextBox>
+        <Button x:Name="ExecuteButton" Content="Execute" Click="ExecuteButton_Click" IsEnabled="False"/>
+        <Button x:Name="ExecuteButton2" Content="Execute2" Click="ExecuteButton2_Click" Visibility="Collapsed"/>
+        <TextBox x:Name="OutputTextBox" IsReadOnly="True" Text="Line 1 &#x0a;Line2"  MaxHeight="260" VerticalScrollBarVisibility="Auto"></TextBox>
+    </StackPanel>
+</Window>
