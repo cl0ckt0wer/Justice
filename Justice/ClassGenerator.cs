@@ -66,7 +66,7 @@ namespace YourNamespaceHere
     {{
 ";
             propertystringbuilder.Clear();
-            foreach (var x in storedProc.StoredProcParameters.OrderBy(x => x.Name))
+            foreach (var x in storedProc.StoredProcParameters)
             {
                 propertystringbuilder.Append($@"
             public string? {x.Name.Replace("@", "")};
