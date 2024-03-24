@@ -15,8 +15,6 @@ namespace Justice
             nameOfClass = nameOfClass.Replace(".", "_");
 
             string namespaceAndClassDeclaration = $@"
-using Microsoft.Data.SqlClient; 
-using System.Data;
 namespace YourNamespaceHere
 {{
     public class {nameOfClass}
@@ -27,7 +25,7 @@ namespace YourNamespaceHere
 }}";
             var propertystringbuilder = new StringBuilder();
             //https://stackoverflow.com/questions/43021/how-do-you-get-the-index-of-the-current-iteration-of-a-foreach-loop            
-            foreach (var (x, index) in storedProc.StoredProcResultMetaDatas.OrderBy(x => x.Name).Select((x, i) => (x, i)))
+            foreach (var (x, index) in storedProc.StoredProcResultMetaDatas.Select((x, i) => (x, i)))
             {
                 if (!string.IsNullOrEmpty(x.Name))
                     propertystringbuilder.Append($@"
@@ -41,10 +39,10 @@ namespace YourNamespaceHere
             var outputclass = propertystringbuilder.ToString();
             propertystringbuilder.Clear();
             propertystringbuilder.Append($@"
-            public {nameOfClass}(IDataRecord reader)
+            public {nameOfClass}(System.Data.IDataRecord reader)
             {{
 ");
-            foreach (var (x, index) in storedProc.StoredProcResultMetaDatas.OrderBy(x => x.Name).Select((x, i) => (x, i)))
+            foreach (var (x, index) in storedProc.StoredProcResultMetaDatas.Select((x, i) => (x, i)))
             {
                 if (!string.IsNullOrEmpty(x.Name))
                     propertystringbuilder.Append($@"
@@ -78,9 +76,9 @@ namespace YourNamespaceHere
             var parameterClassProperties = propertystringbuilder.ToString();
             propertystringbuilder.Clear();
             var addGetSqlParameterArray = $@"
-        public SqlParameter[] GetSqlParameters() 
+        public Microsoft.Data.SqlClient.SqlParameter[] GetSqlParameters() 
         {{
-            var ret = new SqlParameter[{storedProc.StoredProcParameters.Count}];
+            var ret = new Microsoft.Data.SqlClient.SqlParameter[{storedProc.StoredProcParameters.Count}];
 ";
             for (int i = 0; i < storedProc.StoredProcParameters.Count; i++)
             {
@@ -88,21 +86,47 @@ namespace YourNamespaceHere
                 if (storedProc.StoredProcParameters[i].HasDefaultValue)
                 {
                     propertystringbuilder.Append($@"
-            ret[{i}] = new SqlParameter();
+            ret[{i}] = new Microsoft.Data.SqlClient.SqlParameter();
             ret[{i}].SqlDbType = (System.Data.SqlDbType)System.Enum.Parse(typeof(System.Data.SqlDbType), ""{storedProc.StoredProcParameters[i].Type}"", true);
-            ret[{i}].ParameterName = ""{storedProc.StoredProcParameters[i].Name}"";
-            ret[{i}].SqlValue = {storedProc.StoredProcParameters[i].Name.Replace("@", "")};
-");
+            ret[{i}].ParameterName = ""{storedProc.StoredProcParameters[i].Name}"";");
+                    if (storedProc.StoredProcParameters[i].Type == "bit")
+                    {
+                        propertystringbuilder.Append($@"
+            ret[{i}].SqlValue = {storedProc.StoredProcParameters[i].Name.Replace("@", "")} == ""1"" ? true : false;");
+                    }
+                    else
+                    {
+                        propertystringbuilder.Append($@"
+            ret[{i}].SqlValue = {storedProc.StoredProcParameters[i].Name.Replace("@", "")};");
+                    }
+          
                 }
                 else
                 {
                     propertystringbuilder.Append($@"
-            ret[{i}] = new SqlParameter();
+            ret[{i}] = new Microsoft.Data.SqlClient.SqlParameter();
             ret[{i}].SqlDbType = (System.Data.SqlDbType)System.Enum.Parse(typeof(System.Data.SqlDbType), ""{storedProc.StoredProcParameters[i].Type}"", true);
-            ret[{i}].ParameterName = ""{storedProc.StoredProcParameters[i].Name}"";
-            ret[{i}].SqlValue = (object){storedProc.StoredProcParameters[i].Name.Replace("@", "")} ?? (object)DBNull.Value;
-");
+            ret[{i}].ParameterName = ""{storedProc.StoredProcParameters[i].Name}"";");
                 }
+                if (storedProc.StoredProcParameters[i].Type == "bit")
+                {
+                    propertystringbuilder.Append($@"
+            ret[{i}].SqlValue = {storedProc.StoredProcParameters[i].Name.Replace("@", "")} is null ? DBNull.Value : {storedProc.StoredProcParameters[i].Name.Replace("@", "")} == ""1"" ? true : false;");
+                }
+                else
+                {
+                    propertystringbuilder.Append($@"
+            ret[{i}].SqlValue = (object){storedProc.StoredProcParameters[i].Name.Replace("@", "")} ?? (object)DBNull.Value;");
+                }
+                if (storedProc.StoredProcParameters[i].IsOutput)
+                {
+                    propertystringbuilder.Append($@"
+            ret[{i}].Direction = System.Data.ParameterDirection.Output;
+            ret[{i}].Size = {storedProc.StoredProcParameters[i].MaxLength}");
+                }
+
+                propertystringbuilder.Append($@"
+");
             }
             propertystringbuilder.Append($@"
             return ret;

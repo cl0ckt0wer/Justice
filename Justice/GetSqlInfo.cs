@@ -29,6 +29,11 @@ namespace Justice
                         //new we need to get the parameter types and names
                         //prepare a new reader to get the data
                         command.CommandText = GET_STORED_PROC_PARAMETERS_WITH_DEFAULTS.Replace(ProcedureNamePlaceholder, procname);
+                        var p = command.CreateParameter();
+                        p.ParameterName = "@ProcName";
+                        p.SqlDbType = SqlDbType.NVarChar;
+                        p.Value = procname;
+                        command.Parameters.Add(p);
 
                         var sqlStoredProcParameterMetadata = GetStoredProcParameterMetadata(command.ExecuteReader());
                         await dataReader.CloseAsync();
@@ -113,15 +118,16 @@ namespace Justice
                     DefaultValue = dataReader.GetString(parameterOrdinals["DefaultValue"]);
                     HasDefaultValue = true;
                 }
-
-
+                IsOutput = dataReader.GetFieldValue<bool>(parameterOrdinals["OutputFlag"]);
+                MaxLength = dataReader.GetFieldValue<int>(parameterOrdinals["MaxLength"]);
             }
 
             public string Name { get; set; }
             public string Type { get; set; }
             public string DefaultValue { get; set; }
             public bool HasDefaultValue { get; set; }
-
+            public bool IsOutput { get; set; }
+            public int MaxLength { get; set; }
         }
 
         public const string GetParameters = @"select p.name as ParameterName, t.name as TypeName, p.max_length, p.precision, p.scale, p.is_output
@@ -134,11 +140,10 @@ namespace Justice
         public const string GetProcedure = @"select p.name as ProcedureName, p.definition as ProcedureDefinition
                                                 from sys.procedures p
                                                 where p.object_id = OBJECT_ID('##ProcedureName##')";
-        public static readonly string[] PARAMETER_RESULT_COLUMN_NAMES = new string[] { "ParameterName", "StoredProcedure", "TypeName", "DefaultValue" };
+        public static readonly string[] PARAMETER_RESULT_COLUMN_NAMES = new string[] { "ParameterName", "StoredProcedure", "TypeName", "DefaultValue", "OutputFlag" };
         //yes all this is needed to get parameter defaults
         //https://stackoverflow.com/questions/5873731/is-there-a-way-to-determine-if-a-parameter-in-a-stored-proc-has-a-default-value
         public static readonly string GET_STORED_PROC_PARAMETERS_WITH_DEFAULTS = @"
-declare @ProcName nvarchar(200) = '##ProcedureName##'
 declare @objectid int
 declare @type nchar(2)
 declare @oName nvarchar(100)
@@ -166,6 +171,8 @@ select  @objectid = o.[object_id],
                 ELSE null
             END
 		,TypeName = (select top 1 name from sys.types t where t.user_type_id = data2.user_type_id)
+		,OutputFlag = data2.is_output
+		, MaxLength = data2.max_length
     FROM (
         SELECT  
               data.name
@@ -176,6 +183,8 @@ select  @objectid = o.[object_id],
                 , ISNULL(ABS(next_token_pos - token_pos - name_length - 1), LEN(data.tokens))
             )
 			,data.user_type_id
+			,data.is_output
+			,data.max_length
         FROM (
             SELECT  
                   sm3.tokens
@@ -185,6 +194,8 @@ select  @objectid = o.[object_id],
                 , token_pos = CHARINDEX(p.name, sm3.tokens)
                 , next_token_pos = CHARINDEX(p2.name, sm3.tokens)
 				, p.user_type_id
+				, p.is_output
+				, p.max_length
             FROM (
                 SELECT 
                       sm2.[object_id]
@@ -226,7 +237,6 @@ select  @objectid = o.[object_id],
                     AND sm3.[object_id] = p2.[object_id] 
                     AND p.parameter_id + 1 = p2.parameter_id
             ) p2
-            WHERE p.is_output = 0
         ) data
     ) data2";
     }
