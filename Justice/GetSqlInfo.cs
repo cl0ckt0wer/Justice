@@ -119,7 +119,7 @@ namespace Justice
                     HasDefaultValue = true;
                 }
                 IsOutput = dataReader.GetFieldValue<bool>(parameterOrdinals["OutputFlag"]);
-                MaxLength = dataReader.GetFieldValue<int>(parameterOrdinals["MaxLength"]);
+                MaxLength = dataReader.GetFieldValue<Int16>(parameterOrdinals["MaxLength"]);
             }
 
             public string Name { get; set; }
@@ -127,7 +127,7 @@ namespace Justice
             public string DefaultValue { get; set; }
             public bool HasDefaultValue { get; set; }
             public bool IsOutput { get; set; }
-            public int MaxLength { get; set; }
+            public Int16 MaxLength { get; set; }
         }
 
         public const string GetParameters = @"select p.name as ParameterName, t.name as TypeName, p.max_length, p.precision, p.scale, p.is_output
@@ -140,7 +140,7 @@ namespace Justice
         public const string GetProcedure = @"select p.name as ProcedureName, p.definition as ProcedureDefinition
                                                 from sys.procedures p
                                                 where p.object_id = OBJECT_ID('##ProcedureName##')";
-        public static readonly string[] PARAMETER_RESULT_COLUMN_NAMES = new string[] { "ParameterName", "StoredProcedure", "TypeName", "DefaultValue", "OutputFlag" };
+        public static readonly string[] PARAMETER_RESULT_COLUMN_NAMES = new string[] { "ParameterName", "StoredProcedure", "TypeName", "DefaultValue", "OutputFlag", "MaxLength" };
         //yes all this is needed to get parameter defaults
         //https://stackoverflow.com/questions/5873731/is-there-a-way-to-determine-if-a-parameter-in-a-stored-proc-has-a-default-value
         public static readonly string GET_STORED_PROC_PARAMETERS_WITH_DEFAULTS = @"

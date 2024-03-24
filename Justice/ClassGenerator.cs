@@ -99,7 +99,7 @@ namespace YourNamespaceHere
                         propertystringbuilder.Append($@"
             ret[{i}].SqlValue = {storedProc.StoredProcParameters[i].Name.Replace("@", "")};");
                     }
-          
+
                 }
                 else
                 {
@@ -107,16 +107,17 @@ namespace YourNamespaceHere
             ret[{i}] = new Microsoft.Data.SqlClient.SqlParameter();
             ret[{i}].SqlDbType = (System.Data.SqlDbType)System.Enum.Parse(typeof(System.Data.SqlDbType), ""{storedProc.StoredProcParameters[i].Type}"", true);
             ret[{i}].ParameterName = ""{storedProc.StoredProcParameters[i].Name}"";");
-                }
-                if (storedProc.StoredProcParameters[i].Type == "bit")
-                {
-                    propertystringbuilder.Append($@"
+
+                    if (storedProc.StoredProcParameters[i].Type == "bit")
+                    {
+                        propertystringbuilder.Append($@"
             ret[{i}].SqlValue = {storedProc.StoredProcParameters[i].Name.Replace("@", "")} is null ? DBNull.Value : {storedProc.StoredProcParameters[i].Name.Replace("@", "")} == ""1"" ? true : false;");
-                }
-                else
-                {
-                    propertystringbuilder.Append($@"
+                    }
+                    else
+                    {
+                        propertystringbuilder.Append($@"
             ret[{i}].SqlValue = (object){storedProc.StoredProcParameters[i].Name.Replace("@", "")} ?? (object)DBNull.Value;");
+                    }
                 }
                 if (storedProc.StoredProcParameters[i].IsOutput)
                 {

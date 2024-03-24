@@ -72,7 +72,7 @@ namespace Justice
                 if (string.IsNullOrEmpty(connectionString)) return;
                 ExecuteButton.IsEnabled = false;
                 var exampletext = StringFromRichTextBox(QueryRichTextBox);
-                var x = await GetSqlInfo.GetSqlProfile(connectionString, exampletext, StoredProcNameTextBox.Text);
+                var x = await GetSqlInfo.GetSqlProfile(connectionString, exampletext, StoredProcNameTextBox.Text.Trim());
                 var y = await ClassGenerator.GenerateClass(x);
                 OutputTextBox.Text = y;
             }
